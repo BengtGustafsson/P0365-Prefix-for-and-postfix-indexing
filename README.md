@@ -144,7 +144,7 @@ It was decided not to offer any direct syntax to create a slice of a pack by som
 decision was based on the fact that for expressions and pack indexing handles most cases where such slices would be useful.
 
 It was decided not to extend pack indexing to non-packs as for expressions handle these cases without having to resort to
-transforming a built in indexing operator (a language feature) to a std::get<> call (a library feature).
+transforming a built in indexing operator (a language feature) to a `std::get<>` call (a library feature).
 
 
 Interaction with other proposals and possible proposals
@@ -155,7 +155,7 @@ formulations to be used when the for expression is used with a pack expansion. I
 current ranges proposal will be formulated with constexpr in mind.
 
 - constexpr function parameters as a terse version of non-type template parameters plus addition of operator[](constexpr size_t ix)
-on tuple and array would allow nicer code than get<IX>(tuple) to be used when those types of data are involved in the processing,
+on tuple and array would allow nicer code than `get<IX>(tuple)` to be used when those types of data are involved in the processing,
 which of course is a general observation but made obvious in the examples above.
 
 - Lifting the requirement that fold expressions are enclosed in parentheses. By now compiler implementors should know whether the
@@ -167,11 +167,11 @@ unpleasant surprise.
 - Changing the parameter of a fold expression from cast-expression to for-expression to remove another parenthesis set. This would
 in general be a good idea to make them more similar to the pure pack expansions which have a much lower precedence.
 
-- A (library only) possibility to write `for (auto ix : 5)` is available (see sketch in Appendix B below). This would increase the terseness of
-the typical for expression head, and has other uses with for statements.
+- A (library only) possibility to write `for (auto ix : 5)` is available (see sketch in Appendix C below). This would increase the terseness of
+the typical for expression head, and has other uses with for _statements_.
 
 - Compile time type information proposals based on built in traits for tasks such as enumerating struct member names and types
-would benefit from the simlplicity of the for expression to enumerate through the members.
+would benefit from the simplicity of the for expression to enumerate through the members.
 
 - Proposals to access struct members via some type of indexing would get help from for expressions to get indexes for their
 operators.
@@ -259,9 +259,9 @@ VIII. References
 ================
 
 
-[Link] (https://github.com/mwoehlke/cpp-proposals/blob/master/p0535r0-generalized-unpacking.rst "D0535. Generalized unpacking")
+[D0535. Generalized unpacking] (https://github.com/mwoehlke/cpp-proposals/blob/master/p0535r0-generalized-unpacking.rst "D0535. Generalized unpacking")
 
-[Link] (http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4235.htm "N4235. Selecting from parameter packs")
+[N4235. Selecting from parameter packs] (http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4235.htm "N4235. Selecting from parameter packs")
 
 
 
@@ -277,7 +277,8 @@ Apply
 The current state of the art implementation of apply uses std::index_sequence, thereby reducing the helper functions to one and
 the template instantiations to two. Nevertheless it is hard to describe this implementation as straigt-forward.
 
-    template <typename F, typename T, std::size_t... Is> constexpr decltype(auto) apply_impl(F&& f, T& tuple, std::index_sequence<Is...>)
+    template <typename F, typename T, std::size_t... Is> 
+constexpr decltype(auto) apply_impl(F&& f, T& tuple, std::index_sequence<Is...>)
     {
         return f(std::get<Is>(tuple)...);
     }
@@ -548,7 +549,9 @@ If you don't have a variadic sum function lying around it would be possible to w
 
     template<typename ... Ts, int ... Ns>
     std::size_t f() {
-        return ((for (size_t IX : ints(sizeof...(Ts))) sizeof(Ts[Ns[IX]])) ... +);     // Fold the pack that for produces over +
+
+        // Fold the pack that for produces over +
+        return ((for (size_t IX : ints(sizeof...(Ts))) sizeof(Ts[Ns[IX]])) ... +);
     }
 
 
@@ -568,37 +571,37 @@ at 0 can be simplified. This is a library only solution. This would maybe not ev
 range based for only looks for begin functions in the _std_ namespace. Here is simplified sample code for this functionality, in
 particular constexpr is lacking.
 
-namespace std {
+	namespace std {
 
-    template<typename I> class interator {
-    public:
-        interator() = default;
-        interator(I v) : mVal(v) {}
+		template<typename I> class interator {
+		public:
+			interator() = default;
+			interator(I v) : mVal(v) {}
 
-        // Note the const: This prevents ideas of being able to manipulate this index to adjust for a changed container size.
-        const I operator*() { return mVal; }        
+			// Note the const: This prevents trying to manipulate this index to adjust for a changed container size.
+			const I operator*() { return mVal; }        
 
-        interator& operator++() { mVal++; return *this; }  // prefix
-        interator operator++(int) { return interator(exchange(mVal, mVal + 1)); }  // postfix
-        interator& operator--() { mVal--; return *this; }  // prefix
-        interator operator--(int) { return interator(exchange(mVal, mVal - 1)); }  // postfix
+			interator& operator++() { mVal++; return *this; }  // prefix
+			interator operator++(int) { return interator(exchange(mVal, mVal + 1)); }  // postfix
+			interator& operator--() { mVal--; return *this; }  // prefix
+			interator operator--(int) { return interator(exchange(mVal, mVal - 1)); }  // postfix
 
-        bool operator==(const interator& other) { return mVal == other.mVal; }
-        bool operator!=(const interator& other) { return mVal != other.mVal; }
-        bool operator<(const interator& other) { return mVal < other.mVal; }
-        bool operator<=(const interator& other) { return mVal <= other.mVal; }
-        bool operator>=(const interator& other) { return mVal >= other.mVal; }
-        bool operator>(const interator& other) { return mVal > other.mVal; }
+			bool operator==(const interator& other) { return mVal == other.mVal; }
+			bool operator!=(const interator& other) { return mVal != other.mVal; }
+			bool operator<(const interator& other) { return mVal < other.mVal; }
+			bool operator<=(const interator& other) { return mVal <= other.mVal; }
+			bool operator>=(const interator& other) { return mVal >= other.mVal; }
+			bool operator>(const interator& other) { return mVal > other.mVal; }
 
-    private:
-        size_t mVal = 0;
-    };
+		private:
+			size_t mVal = 0;
+		};
 
-    // Unclear which type set is required. This has more to do with avoiding compiler warnings than functionality.
-    // For now just do size_t, it works with standard containers.
-    inline interator<size_t> begin(size_t ix) { return interator<size_t>(); }
-    inline interator<size_t> end(size_t ix) { return interator<size_t>(ix); }
-}
+		// Unclear which type set is required. This has more to do with avoiding compiler warnings than functionality.
+		// For now just do size_t, it works with standard containers.
+		inline interator<size_t> begin(size_t ix) { return interator<size_t>(); }
+		inline interator<size_t> end(size_t ix) { return interator<size_t>(ix); }
+	}
 
 
 The class name will definitely need some bike-shedding!
