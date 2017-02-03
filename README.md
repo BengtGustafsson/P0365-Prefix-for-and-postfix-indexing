@@ -1,9 +1,9 @@
-```
-Document number:                D0565
-Date:                           2017-02-02
-Project:                        Programming Language C++, Evolution Working Group
-Reply to:                       Bengt Gustafsson (bengt dot gustafsson at beamways dot com)
-```
+~~~~
+	Document number:                D0565
+	Date:                           2017-02-02
+	Project:                        Programming Language C++, Evolution Working Group
+	Reply to:                       Bengt Gustafsson (bengt dot gustafsson at beamways dot com)
+~~~~
 
 
 Prefix for operator as a pack generator and postfix operator[] for pack indexing
@@ -12,19 +12,19 @@ Prefix for operator as a pack generator and postfix operator[] for pack indexing
 I. Table of contents
 -------------------
 
-```
-II.   Introduction
-III.  Motivation and scope
-IV.   Impact on the standard
-V.    Design decisions
-VI.   Technical specification
-VII.  Acknowledgements
-VIII. References
 
-Appendix A: Examples
-Appendix B: Postfix operator[] for pack indexing, why is it not ambiguous
-Appendix C: Simplified integer range creation
-```
+	II.          Introduction
+	III.         Motivation and scope
+	IV.          Impact on the standard
+	V.           Design decisions
+	VI.          Technical specification
+	VII.         Acknowledgements
+	VIII.        References
+
+	Appendix A.  Examples
+	Appendix B.  Postfix operator[] for pack indexing, why is it not ambiguous
+	Appendix C.  Simplified integer range creation
+
 
 II. Introduction
 ================
@@ -99,15 +99,15 @@ V. Design decisions
 For expression
 --------------
 
-This proposal evolved out of the D0535 proposal regarding prefix operator[] to index and slice packs and tuple-likes. It was
+This proposal evolved out of the P0535 proposal regarding prefix operator[] to index and slice packs and tuple-likes. It was
 observed that even though the slicing operation contained the full Python possibilities with negative and out of bounds indices it
 still lacked abilities to set a step or for instance reverse the sequence. A pack indexing operator of any syntax is by itself of
-limited use as the generation of those constexpr indices is non-trivial.
+limited use as the generation of the required constexpr indices is non-trivial.
 
 One design decision was to use the for keyword for this purpose. This has the advantage of an intuitive interpretation and lineage
 from Python for expressions acts as a precendent. An important reason for this decision was the lack of available operator tokens
 to use for this purpose, and, if such a token could be found, the need to explain why it is not overloadable. Another possibility
-that was examined is to augment the ... of the pack expansion or fold expression with a way to set its range and introduce a loop
+that was examined is to augment the ... of the pack expansion and fold expression with a way to set its range and introduce a loop
 variable. One problem with this is that fold expressions already use both sides of the ... for other purposes.
 
 Another design decision was to keep the for as a prefix operator. This creates a slight parsing issue but has the advantage of
@@ -143,8 +143,8 @@ can be complemented by a for expression to fully control how indexing of packs i
 It was decided not to offer any direct syntax to create a slice of a pack by somehow specifying starting and ending indices. This
 decision was based on the fact that for expressions and pack indexing handles most cases where such slices would be useful.
 
-It was decided not to extend pack indexing to non-packs as for expressions handle these cases without having to resort to
-transforming a built in indexing operator (a language feature) to a `std::get<>` call (a library feature).
+It was decided not to extend pack indexing to non-packs as suggested in P0535 as for expressions handle these cases without having
+to resort to transforming a built in indexing operator (a language feature) to a `std::get<>` call (a library feature).
 
 
 Interaction with other proposals and possible proposals
@@ -196,7 +196,7 @@ The contents of the parenthesis after the for keyword (the for head) follows the
 the for expression is limited to a conditional-expression.
 
 When the loop range is constexpr the for expression body is semantically analyzed separately for each loop turn as in a pack expansion. This
-allows for the heterogenous types that would be produced by for instance a std::get<IX>(tuple) inside the for body. However, in
+allows for the heterogenous types that would be produced by for instance a `std::get<IX>(tuple)` inside the for body. However, in
 contrast with a pack expansion identifiers denoting packs refer to the whole pack, not the current pack element. This means that
 for packs to be mentioned in the for expression body they have to be indexed.
 
@@ -250,7 +250,7 @@ There are no effects on the syntax of the language as this construct is already 
 VII. Acknowledgements
 ======================
 
-This proposal created after lengthy email discussions with Matthew Woehlke regarding his D0535 proposal, discussions which drifted
+This proposal created after lengthy email discussions with Matthew Woehlke regarding his P0535 proposal, discussions which drifted
 in the direction of the present proposal. The for based syntax was also initially suggested by Matthew, by reference to the Python
 infix form.
 
@@ -259,7 +259,7 @@ VIII. References
 ================
 
 
-[D0535. Generalized unpacking] (https://github.com/mwoehlke/cpp-proposals/blob/master/p0535r0-generalized-unpacking.rst "D0535. Generalized unpacking")
+[P0535. Generalized unpacking] (https://github.com/mwoehlke/cpp-proposals/blob/master/p0535r0-generalized-unpacking.rst "P0535. Generalized unpacking")
 
 [N4235. Selecting from parameter packs] (http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4235.htm "N4235. Selecting from parameter packs")
 
@@ -278,7 +278,7 @@ The current state of the art implementation of apply uses std::index_sequence, t
 the template instantiations to two. Nevertheless it is hard to describe this implementation as straigt-forward.
 
     template <typename F, typename T, std::size_t... Is> 
-constexpr decltype(auto) apply_impl(F&& f, T& tuple, std::index_sequence<Is...>)
+    constexpr decltype(auto) apply_impl(F&& f, T& tuple, std::index_sequence<Is...>)
     {
         return f(std::get<Is>(tuple)...);
     }
@@ -344,8 +344,8 @@ Reversing a tuple
 -----------------
 
 Reversing a tuple today requires considerable template programming skill. Even with the proposed pack and tuple slicing
-functionality of D0535 and `if constexpr` it gets quite complex and slow to compile, without those features even more daunting.
-Here is the D0535 example:
+functionality of P0535 and `if constexpr` it gets quite complex and slow to compile, without those features even more daunting.
+Here is the P0535 example:
 
     template <int n, typename... Args>
     auto reverse_tuple_helper(Args... args)
@@ -432,7 +432,7 @@ This proposal would instead use a for expression. The resulting pack-like is the
         return { for (size_t IX : ints(N - 1)) a[IX] / a[N - 1] ...);
     }
 
-The D0535 proposal solves this by slicing a pack into a one element shorter pack and indexing the pack to produce a value (which the pack expansion does not touch).
+The P0535 proposal solves this by slicing a pack into a one element shorter pack and indexing the pack to produce a value (which the pack expansion does not touch).
 
     template <typename T, size_t N> std::array<T, N-1> 
     normalize(std::array<T, N> a)
@@ -496,7 +496,7 @@ Here is the example from N4235:
     }
 
 
-Without postfix pack indexing this can be understood as summing up the sizes of the set of arrays formed as TS[Ns]. However, it is
+Without postfix pack indexing this can be understood as summing up the sizes of the set of arrays formed as Ts[Ns]. However, it is
 hard to imagine that even with postfix pack indexing there could be an alternate interpretation as the identifiers Ts and Ns do not
 stand for packs but pack elements inside the pack expansion.
 
@@ -520,13 +520,13 @@ In the body of the for both packs are unexpanded, and Ns acts as an index table 
 The original example can of course also be written using a for-expression, which would be less terse than the original, and has a somewhat painful 
 formulation of the sizeof() argument. But it works and is not ambiguous, again as the for body is not in a pack expansion.
 
-   template<typename ... Ts, int ... Ns>  // Packs must be like-sized
+    template<typename ... Ts, int ... Ns>  // Packs must be like-sized
     std::size_t f() {
-      sum(for (size_t IX : ints(sizeof...(Ts))) sizeof(Ts[IX][Ns[IX]]) ...);
+        sum(for (size_t IX : ints(sizeof...(Ts))) sizeof(Ts[IX][Ns[IX]]) ...);
     }
 
 
-D0535 would look like the original for the current interpretation and like this for the alternate interpretation. Yes the only
+P0535 would look like the original for the current interpretation and like this for the alternate interpretation. Yes the only
 difference is the placement of the brackets. This causes Ts to be a non-pack in the pack expansion which thus runs sizeof...(Ns) times.
 
     template<typename ... Ts, int ... Ns>
@@ -534,7 +534,7 @@ difference is the placement of the brackets. This causes Ts to be a non-pack in 
         sum(sizeof([Ns]Ts) ...);
     }
 
-Or that's what I thought. The author of D0535 claims that this does not work as both Ns and Ts are expanded before the prefix [] is
+Or that's what I thought. The author of P0535 claims that this does not work as both Ns and Ts are expanded before the prefix [] is
 applied, which means that you are taking the size of index Ns of each pack-like Ts parameter. Using Ns as a index table into Ts would
 need to ensure that the Ts is not expanded, which is done by a few tricks:
 
@@ -602,6 +602,10 @@ particular constexpr is lacking.
 		inline interator<size_t> begin(size_t ix) { return interator<size_t>(); }
 		inline interator<size_t> end(size_t ix) { return interator<size_t>(ix); }
 	}
+
+	// Example:
+	for (auto ix : 100)
+		std::cout << ix << std::endl;
 
 
 The class name will definitely need some bike-shedding!
