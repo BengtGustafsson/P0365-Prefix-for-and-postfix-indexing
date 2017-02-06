@@ -200,7 +200,7 @@ The contents of the parenthesis after the for keyword (the for head) follows the
 the for expression is limited to a conditional-expression.
 
 When the loop range is constexpr the for expression body is semantically analyzed separately for each loop turn as in a pack expansion. This
-allows for heterogenous types that would be produced by for instance a `std::get<IX>(tuple)` inside the for body. However, in
+allows for heterogeneous types that would be produced by for instance a `std::get<IX>(tuple)` inside the for body. However, in
 contrast with a pack expansion identifiers denoting packs refer to the whole pack, not the current pack element. This means that
 for packs to be mentioned in the for expression body they have to be indexed.
 
