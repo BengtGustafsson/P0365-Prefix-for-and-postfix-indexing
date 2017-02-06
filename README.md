@@ -9,9 +9,9 @@
 Prefix for operator as a pack generator and postfix operator[] for pack indexing
 ================================================================================
 
-I. Table of contents
--------------------
 
+I. Table of contents
+====================
 
 	II.          Introduction
 	III.         Motivation and scope
@@ -44,6 +44,9 @@ can be implemented with a for expression:
     }
 
 
+An updated version of this document may be found at: [P0565] (https://github.com/BengtGustafsson/P0565-Prefix-for-and-postfix-indexing)
+
+
 III. Motivation and scope
 =========================
 
@@ -56,13 +59,13 @@ parentheses. The problem is however what to index these operators with, as the i
 some range. The current solution to this is to use an index_sequence which most often necessitates the creation of a helper
 function.
 
-Another type of problems relate to the need of being able to convert regular data structures to packs in order to use them in
+Another type of problem relates to the need of being able to convert regular data structures to packs in order to use them in
 contexts where packs can be used, such as when calling a function. A prime example is the apply function which allows calling a
 function with the individual elements of a tuple.
 
-To solve these problems today requires expert level knowledge of variadic templates, perfect forwarding and not least the patterns
+To solve these problems today requires expert level knowledge of variadic templates, perfect forwarding and not least patterns
 to use the bleak tools of the language to achieve the desired effects. Even after significant training writing such code is slow and
-error prone, the notorious error messages in template code compound the problem. 
+error prone, the notorious error messages in template code compounding the problem. 
 
 This proposal significantly lowers the threshold for programmer skill required to work with variadic template code and
 makes the process less tedious and error prone. In addition it is foreseen that it could have a significant positive impact on
@@ -90,7 +93,7 @@ Postfix pack indexing
 ---------------------
 
 This feature is a core language change to allow a postfix operator[] with a constexpr index to be applied to a pack outside pack expansions.
-As pack names are currently even allowed to be mentioned outside expansions there is no backwards compatibility issues.
+As pack names are currently not even allowed to be mentioned outside expansions there are no backwards compatibility issues.
 
 
 V. Design decisions
@@ -102,31 +105,34 @@ For expression
 This proposal evolved out of the P0535 proposal regarding prefix operator[] to index and slice packs and tuple-likes. It was
 observed that even though the slicing operation contained the full Python possibilities with negative and out of bounds indices it
 still lacked abilities to set a step or for instance reverse the sequence. A pack indexing operator of any syntax is by itself of
-limited use as the generation of the required constexpr indices is non-trivial.
+limited use as the generation of the required constexpr indices is non-trivial. This led to the idea of replacing the slicing of
+the packs themselves with a possibility to limit the range of the actual pack expansion. The next step was to conclude that being
+able to use the (constexpr) index of that loop in the expression being expanded would replace the need for slicing and indexing of
+tuple-likes too.
 
-One design decision was to use the for keyword for this purpose. This has the advantage of an intuitive interpretation and lineage
+One design decision was to use the for keyword for this feature. This has the advantage of an intuitive interpretation and lineage
 from Python for expressions acts as a precendent. An important reason for this decision was the lack of available operator tokens
 to use for this purpose, and, if such a token could be found, the need to explain why it is not overloadable. Another possibility
-that was examined is to augment the ... of the pack expansion and fold expression with a way to set its range and introduce a loop
+that was examined was to augment the ... of the pack expansion and fold expression with a way to set its range and introduce a loop
 variable. One problem with this is that fold expressions already use both sides of the ... for other purposes.
 
 Another design decision was to keep the for as a prefix operator. This creates a slight parsing issue but has the advantage of
-introducing the loop index before use, rather than after as would be the case for a more Python-esque syntax.
+introducing the loop index before use, rather than after as would be the case for a more Python-esque infix syntax.
 
 It was also decided to allow the full possibilities of the for statement head when it comes to allowing both traditional and range
 based syntax and allowing both pre-existing and newly declared loop variables as well as multiple variables. Note however as in the
 constexpr case preexisting loop variables is not an option as these are constexpr and thus can not be changed by the for expression!
 
 It was decided to prefer a solution allowing non-constexpr ranges when the for expression is used in conjunction with a fold
-expression. The main motivation for this was to make fold expressions more widely useful and to avoid
-limitations that in time will fall in the "for historical reasons" category.
+expression. The main motivation for this was to make fold expressions more widely useful and to avoid limitations that in time will
+fall in the "for historical reasons" category.
 
-An alternative design that has been suggested includes a co-routine style pack generator function. Such a function would yeild
+An alternative design that has been suggested includes a co-routine style pack generator function. Such a function would _yeild_
 values (possibly of different types) for each element of the pack expansion. One major issue with this type of solution is that
-inside the generator function a loop with a yield would exist. If the type yielded differs between each turn of this loop a
-completely new rule set regarding compilation of a loop would have to be devised for the entire language, not to mention the fact
-that there may be multiple yields nested in the outer loop. Other problems include possible future interference (in syntax or
-mindset) with proposals for regular co-routines and the fact that this does not work for runtime variable ranges.
+inside the generator function a loop with a yield statement would exist. If the type yielded differs between each turn of this loop
+a completely new rule set regarding compilation of a loop would have to be devised for the entire language. Other problems include
+possible future interference (in syntax or mindset) with proposals for regular co-routines and the fact that this does not work for
+runtime variable ranges.
 
 
 Postfix pack indexing
@@ -155,20 +161,16 @@ formulations to be used when the for expression is used with a pack expansion. I
 current ranges proposal will be formulated with constexpr in mind.
 
 - constexpr function parameters as a terse version of non-type template parameters plus addition of operator[](constexpr size_t ix)
-on tuple and array would allow nicer code than `get<IX>(tuple)` to be used when those types of data are involved in the processing,
-which of course is a general observation but made obvious in the examples above.
+on tuple and array would allow nicer code than `get<IX>(tuple)` to be used when those types of data are involved.
 
-- Lifting the requirement that fold expressions are enclosed in parentheses. By now compiler implementors should know whether the
-parenthesis always surrounding fold expressions are really required to avoid ambiguities. On the other hand: this would make it
-hard to prevent a for expression + fold expression combination constituting a expression-statement. This poses the problem that if
-the for keyword is treated as the beginning of a for _statement_ the ... leading in to the fold expression will come as an
-unpleasant surprise.
+- Lifting the requirement that fold expressions are enclosed in parentheses. It is at present unclear to the author why this is
+currently required.
 
 - Changing the parameter of a fold expression from cast-expression to for-expression to remove another parenthesis set. This would
-in general be a good idea to make them more similar to the pure pack expansions which have a much lower precedence.
+in general be a good idea to make fold expressions more similar to the pure pack expansions which have a much lower precedence.
 
-- A (library only) possibility to write `for (auto ix : 5)` is available (see sketch in Appendix C below). This would increase the terseness of
-the typical for expression head, and has other uses with for _statements_.
+- A (library only) possibility to write `for (auto ix : 5)` is available (see sketch in Appendix C below). Standardizing this would
+increase the terseness of the typical for expression head, and has other uses with for _statements_.
 
 - Compile time type information proposals based on built in traits for tasks such as enumerating struct member names and types
 would benefit from the simplicity of the for expression to enumerate through the members.
@@ -176,10 +178,12 @@ would benefit from the simplicity of the for expression to enumerate through the
 - Proposals to access struct members via some type of indexing would get help from for expressions to get indexes for their
 operators.
 
+- While this proposal may reduce their utility there does not seem to be any reason to believe that proposals regarding pack
+variables or pack return types would be negatively impacted by this proposal.
+
 
 VI. Technical specification
 ============================
-
 
 For expression
 --------------
@@ -189,14 +193,14 @@ pack-like. The difference from a pack is that it can have a runtime variable num
 the pack-like is a pack and can be used as any pack to initiate array elements, generate function parameters etc. All pack-likes
 can be used together with fold expressions.
 
-A for expression must be combined with a pack expansion or fold expression that drives the loop and decides what to do with the
+A for expression must be combined with a pack expansion or fold expression that drives the loop and controls what to do with the
 generated pack elements. A for expression that is not part of a pack expansion or fold expression is ill-formed.
 
 The contents of the parenthesis after the for keyword (the for head) follows the same rules as a for statement head. The body of
 the for expression is limited to a conditional-expression.
 
 When the loop range is constexpr the for expression body is semantically analyzed separately for each loop turn as in a pack expansion. This
-allows for the heterogenous types that would be produced by for instance a `std::get<IX>(tuple)` inside the for body. However, in
+allows for heterogenous types that would be produced by for instance a `std::get<IX>(tuple)` inside the for body. However, in
 contrast with a pack expansion identifiers denoting packs refer to the whole pack, not the current pack element. This means that
 for packs to be mentioned in the for expression body they have to be indexed.
 
@@ -208,7 +212,7 @@ expression is ill-formed (as this would prevent code from being generated as a l
 index range).
 
 In fold expressions involving a for expression and a shortcut operator (&& or ||) the for loop only runs as many turns as required,
-even if the for expression range is constexpr. With runtime variable range this is implemented as if there was a break inside the
+even if the for expression range is constexpr. With runtime variable range this can be implemented as if there was a break inside the
 loop, while with constexpr range code based on branch instructions needs to be generated, just as for any use of shortcut operators.
 
 
@@ -230,7 +234,7 @@ The new functionality is represented by:
         for ( for-init-statement condition ; expression ) conditional-expression
         for ( for-range-declaration : for-range-initializer ) conditional-expression
 
-Note: A rule must be present (which is hard to express in the grammar) that if a statement starts with the for keyword it is a for
+Note: A rule must be present (which is hard to express in the grammar) that if a statement starts with the _for_ keyword it is a for
 statement. The for of a for-expression can not be the first token of a statement. This rule has no practical implications for
 programmers as the set of valid for expressions is a subset of the set of valid for statements.
 
@@ -240,7 +244,7 @@ Postfix pack indexing
 
 This feature allows indexing a pack to access one of its elements outside of pack expansions.
 
-In pack expansions this operator is not available as the pack identifier denotes the current pack element and not the pack itself.
+In pack expansions this operator is not available as the pack name denotes the current pack element and not the pack itself.
 
 This feature applies to value, type and template packs alike.
 
@@ -300,10 +304,9 @@ With a for expression no helper function is required:
 
 (This code relies on a constexpr ints() function from some range library which generates a range of ints from 0 to its parameter - 1). 
 
-Examining this code in detail shows that it uses the standard `get<size_t>` to get each element out of the tuple. The
-resulting pack is then expanded to a function parameter list. This imposes the requirement
-that the for expression's range must be constexpr. In this example the same restriction is also imposed by the use of the loop
-index as a template parameter to `get<>`.
+Examining this code in detail shows that it uses the standard `get<size_t>` to get each element out of the tuple. The resulting
+pack is then expanded to a function parameter list. This imposes the requirement that the for expression's range must be constexpr.
+In this example the same restriction is also imposed by the use of the loop index as a template parameter to `get<>`.
 
 
 Initializing a C array
@@ -394,7 +397,7 @@ available for all pack-likes generated by for expressions. As a pack is a pack-l
 pack is the same as before (including handling heterogenous types). As the fold expression operand is only a cast-expression we
 need an extra set of parentheses around the for.
 
-By definition there must always be a parenthesis around the entire fold expression (for unknown reasons).
+By definition there must always be a parenthesis around the entire fold expression.
 
 
 Tuple relational operators
@@ -461,8 +464,8 @@ five first parameters of `signal()`:
     }
 
 
-This competes well compared to what this proposal would offer, but relies on the dubious feaure of allowing out of bounds slice
-indices (in case there are fewer than five arguments to signal).  This is not consistents with other parts of the language
+This competes well compared to what this proposal would offer, but relies on the dubious feature of allowing out of bounds slice
+indices (in case there are fewer than five arguments to signal). This is not consistents with other parts of the language
 and hides some types of programmer errors. With this proposal you would use pack indexing and a for
 expression:
 
@@ -505,7 +508,7 @@ alternate interpretation offered by the code comment above is not valid.
 
 This would pose a problem for implementations based on index sequences, as you may want to implement a function that really does
 index Ts with Ns. However, with for expressions there is much more syntax available to express what we really want to do in a clear
-way. Here is for example the above function's other interpretation.
+way. Here is for example the above function's other purported interpretation:
 
 
     template<typename ... Ts, int ... Ns>  // Each N must be smaller than sizeof...Ts.
@@ -534,7 +537,7 @@ difference is the placement of the brackets. This causes Ts to be a non-pack in 
         sum(sizeof([Ns]Ts) ...);
     }
 
-Or that's what I thought. The author of P0535 claims that this does not work as both Ns and Ts are expanded before the prefix [] is
+Or that's what this author thought. The author of P0535 claims that this does not work as both Ns and Ts are expanded before the prefix [] is
 applied, which means that you are taking the size of index Ns of each pack-like Ts parameter. Using Ns as a index table into Ts would
 need to ensure that the Ts is not expanded, which is done by a few tricks:
 
@@ -543,17 +546,6 @@ need to ensure that the Ts is not expanded, which is done by a few tricks:
         using types = tuple<Ts...>;
         sum(sizeof([Ns]declval(types))...);
     }
-
-
-If you don't have a variadic sum function lying around it would be possible to write:
-
-    template<typename ... Ts, int ... Ns>
-    std::size_t f() {
-
-        // Fold the pack that for produces over +
-        return ((for (size_t IX : ints(sizeof...(Ts))) sizeof(Ts[Ns[IX]])) ... +);
-    }
-
 
 After these exercises it was concluded that with for-expression postfix pack indexing is viable, but without for-expression the
 usefulness is limited as the disambiguiation that favors the original indexing operator (or in the example actually array
@@ -569,7 +561,7 @@ Note: This is not part of the proposal, but could if desired be formulated in a 
 By adding std::begin and std::end overloads for integer types the code to write a for loop over a range of integer values starting
 at 0 can be simplified. This is a library only solution. This would maybe not even be a proposal if it weren't for the fact that
 range based for only looks for begin functions in the _std_ namespace. Here is simplified sample code for this functionality, in
-particular constexpr is lacking.
+particular constexpr handling is lacking.
 
 	namespace std {
 
